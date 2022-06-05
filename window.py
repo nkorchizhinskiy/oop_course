@@ -9,6 +9,13 @@ import database_output
 from json.decoder import JSONDecodeError
 from typing import Literal
 
+# Dialog windows.
+from dialogs import add_department, \
+                    add_product, \
+                    delete_product, \
+                    add_product_in_department, \
+                    delete_product_in_department 
+
 
 
 
@@ -39,6 +46,7 @@ class MainWindow(QMainWindow):
         """Create menubar"""
         self.menu_bar = QMenuBar(self)
         self.open_table = QMenu("Открыть таблицу", self)
+        self.actions_with_table = QMenu("Действия в таблице", self)
 
         self.table_department = QAction("Отдел", self)
         self.table_products = QAction("Продукты", self)
@@ -50,7 +58,22 @@ class MainWindow(QMainWindow):
             self.table_product_in_department,
             ])
 
+        self.add_department = QAction("Добавить отдел", self)
+        self.add_product = QAction("Добавить новый товар в реестр", self)
+        self.delete_product = QAction("Удалить товар из реестра", self)
+        self.add_product_in_department = QAction("Добавить новый товар в отдел", self)
+        self.delete_product_in_department = QAction("Удалить товар из отдела", self)
+
+        self.actions_with_table.addActions([
+            self.add_department,
+            self.add_product,
+            self.delete_product,
+            self.add_product_in_department,
+            self.delete_product_in_department,
+            ])
+
         self.menu_bar.addMenu(self.open_table)
+        self.menu_bar.addMenu(self.actions_with_table)
         self.setMenuBar(self.menu_bar)
 
     
@@ -70,6 +93,13 @@ class MainWindow(QMainWindow):
         self.table_products.triggered.connect(lambda: self._set_table("products"))
         self.table_product_in_department.triggered.connect(lambda: self._set_table("product_in_department"))
 
+        # Table actions.
+        self.add_department.triggered.connect(self.on_clicked_add_department)
+        self.add_product.triggered.connect(self.on_clicked_add_product)
+        self.delete_product.triggered.connect(self.on_clicked_delete_product)
+        self.add_product_in_department.triggered.connect(self.on_clicked_add_product_in_department)
+        self.delete_product_in_department.triggered.connect(self.on_clicked_delete_product_in_department)
+
     
     def _set_table(self, db_id: str) -> None|Literal["Файл пустой"]:
         """Set table on main window"""
@@ -88,4 +118,27 @@ class MainWindow(QMainWindow):
             self.table.setItem(row, 4, QTableWidgetItem(value[3]))
             row += 1
         
+    
+    def on_clicked_add_department(self) -> None:
+        """Function which add department on signal from menubar"""
+        self.add_department_dialog = add_department.AddDepartment(self.menu_bar)
 
+
+    def on_clicked_add_product(self) -> None:
+        """Function which add product on signal from menubar"""
+        self.add_products = add_product.AddProduct(self.menu_bar)
+
+
+    def on_clicked_delete_product(self) -> None:
+        """Function which delete product on signal from menubar"""
+        self.delete_product = delete_product.DeleteProduct(self.menu_bar)
+
+
+    def on_clicked_add_product_in_department(self) -> None:
+        """Function which add product in department on signal from menubar"""
+        self.add_product_in_department = add_product_in_department.AddProductInDepartment(self.menu_bar)
+
+
+    def on_clicked_delete_product_in_department(self) -> None:
+        """Function which delete product in department on signal from menubar"""
+        self.delete_product_in_department = delete_product_in_department.DeleteProductInDepartment(self.menu_bar)
