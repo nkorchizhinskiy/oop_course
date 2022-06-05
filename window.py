@@ -2,9 +2,13 @@ from PyQt5.QtWidgets import QMainWindow, \
                             QMenuBar, \
                             QMenu, \
                             QAction, \
-                            QTableWidget
+                            QTableWidget, QTableWidgetItem
                             
 from SETTINGS import *
+import database_output
+from json.decoder import JSONDecodeError
+from typing import Literal
+
 
 
 
@@ -13,7 +17,7 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.current_window = "Department"
+        self.current_window = "department"
         self.create_default_condition()
 
 
@@ -53,20 +57,35 @@ class MainWindow(QMainWindow):
     def _create_table(self) -> None:
         """Create table, which display information from database"""
         self.table = QTableWidget(self)
-        self.table.move(30, 50)
-
-        match self.current_window:
-            case "Department":
-                pass
-            case "Products":
-                pass
-            case "Products in department":
-                pass
+        self.table.setFixedSize(600, 500)
+        self.table.setColumnCount(5)
+        self.table.move(70, 50)
+        self._set_table(self.current_window)
+        # TODO Сделать метод upgrade
         
         
     def _set_signals(self) -> None:
         """Set signal to widgets"""
-        self.table_department.triggered.connect(lambda: print('1'))
-        self.table_products.triggered.connect(lambda: print('2'))
-        self.table_product_in_department.triggered.connect(lambda: print('3'))
+        self.table_department.triggered.connect(lambda: self._set_table("department"))
+        self.table_products.triggered.connect(lambda: self._set_table("products"))
+        self.table_product_in_department.triggered.connect(lambda: self._set_table("product_in_department"))
+
+    
+    def _set_table(self, db_id: str) -> None|Literal["Файл пустой"]:
+        """Set table on main window"""
+        try:
+            db_out = database_output.output_database(db_id)
+        except JSONDecodeError:
+            return "Файл пустой"
+       
+        self.table.setRowCount(len(db_out))
+        row = 0
+        for key, value in db_out.items():
+            self.table.setItem(row, 0, QTableWidgetItem(key))
+            self.table.setItem(row, 1, QTableWidgetItem(value[0]))
+            self.table.setItem(row, 2, QTableWidgetItem(value[1]))
+            self.table.setItem(row, 3, QTableWidgetItem(value[2]))
+            self.table.setItem(row, 4, QTableWidgetItem(value[3]))
+            row += 1
+        
 
