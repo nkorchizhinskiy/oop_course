@@ -1,21 +1,21 @@
 from PyQt5.QtWidgets import QMainWindow, \
                             QMenuBar, \
                             QMenu, \
-                            QAction, \
+                            QAction, QMessageBox, \
                             QTableWidget, QTableWidgetItem
                             
 from SETTINGS import *
-import database_output
 from json.decoder import JSONDecodeError
 from typing import Literal
 
 # Dialog windows.
-from dialogs import add_department, \
-                    add_product, \
-                    delete_product, \
-                    add_product_in_department, \
-                    delete_product_in_department 
+from dialogs import add_department 
+from dialogs import add_product
+from dialogs import delete_product
+from dialogs import add_product_in_department
+from dialogs import delete_product_in_department
 
+import database_actions
 
 
 
@@ -104,7 +104,7 @@ class MainWindow(QMainWindow):
     def _set_table(self, db_id: str) -> None|Literal["Файл пустой"]:
         """Set table on main window"""
         try:
-            db_out = database_output.output_database(db_id)
+            db_out = database_actions.output_database(db_id)
         except JSONDecodeError:
             return "Файл пустой"
        
@@ -122,23 +122,76 @@ class MainWindow(QMainWindow):
     def on_clicked_add_department(self) -> None:
         """Function which add department on signal from menubar"""
         self.add_department_dialog = add_department.AddDepartment(self.menu_bar)
+        self.add_department_dialog.push_button.clicked.connect(lambda: self.get_values("add department"))
 
 
     def on_clicked_add_product(self) -> None:
         """Function which add product on signal from menubar"""
-        self.add_products = add_product.AddProduct(self.menu_bar)
+        self.add_product_dialog = add_product.AddProduct(self.menu_bar)
+        self.add_product_dialog.push_button.clicked.connect(lambda: self.get_values("add product"))
 
 
     def on_clicked_delete_product(self) -> None:
         """Function which delete product on signal from menubar"""
-        self.delete_product = delete_product.DeleteProduct(self.menu_bar)
+        self.delete_product_dialog = delete_product.DeleteProduct(self.menu_bar)
+        self.delete_product_dialog.push_button.clicked.connect(lambda: self.get_values("delete product"))
 
 
     def on_clicked_add_product_in_department(self) -> None:
         """Function which add product in department on signal from menubar"""
-        self.add_product_in_department = add_product_in_department.AddProductInDepartment(self.menu_bar)
+        self.add_product_in_department_dialog = add_product_in_department.AddProductInDepartment(self.menu_bar)
+        self.add_product_in_department_dialog.push_button.clicked.connect(lambda: self.get_values("add product in department"))
 
 
     def on_clicked_delete_product_in_department(self) -> None:
         """Function which delete product in department on signal from menubar"""
-        self.delete_product_in_department = delete_product_in_department.DeleteProductInDepartment(self.menu_bar)
+        self.delete_product_in_department_dialog = delete_product_in_department.DeleteProductInDepartment(self.menu_bar)
+        self.delete_product_in_department_dialog.push_button.clicked.connect(lambda: self.get_values("delete product in department"))
+
+
+    def get_values(self, value: str) -> None:
+        """Get value from dialog window"""
+        match value: 
+            case "add department":
+                values = [
+                            self.add_department_dialog.name_field.text(),
+                            self.add_department_dialog.name_chief_field.text(),
+                            self.add_department_dialog.time_start_field.text(),
+                            self.add_department_dialog.time_end_field.text(),
+                        ]
+                result = database_actions.database_add_department(values) 
+                self.add_department_dialog.close()
+                if result == 1:
+                    QMessageBox.warning(self, "Ошибка!", "Такой отдел уже есть.")
+
+            case "add product":
+                values = [
+                            self.add_product_dialog.name_field.text(),
+                            self.add_product_dialog.code_field.text(),
+                            self.add_product_dialog.cost_whilesale_field.text(),
+                            self.add_product_dialog.cost_retail_field.text(),
+                        ]
+                result = database_actions.database_add_product(values)
+                self.add_product_dialog.close()
+                if result == 1:
+                    QMessageBox.warning(self, "Ошибка!", "Такой товар уже есть.")
+            case "delete product":
+                values = [
+                            self.delete_product_dialog.name_combobox.currentText(),
+                            self.delete_product_dialog.name_combobox.currentData()[0],
+                            self.delete_product_dialog.name_combobox.currentData()[1],
+                            self.delete_product_dialog.name_combobox.currentData()[2],
+                        ]
+                database_actions.database_delete_product(values)
+                self.delete_product_dialog.close()
+            case "add product in department":
+                values = [
+                            self.add_product_in_department_dialog.department_name_field.currentText(),
+                            self.add_product_in_department_dialog.product_name_field.currentText(),
+                            self.add_product_in_department_dialog.count_field.text(),
+                            self.add_product_in_department_dialog.receipt_date_field.text(),
+                        ]
+                database_actions.database_add_product_in_department(values)
+                self.add_product_in_department_dialog.close()
+            case "delete product in department":
+                pass
