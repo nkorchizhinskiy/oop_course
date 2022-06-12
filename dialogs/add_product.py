@@ -37,17 +37,18 @@ class AddProduct(QDialog):
 
         self.cost_whilesale_label = QLabel("Цена оптовая", self)
         self.cost_whilesale_field = QDoubleSpinBox(self)
-        self.code_field.setButtonSymbols(QAbstractSpinBox.NoButtons)
-        self.code_field.setMinimum(1)
-        self.code_field.setMaximum(999999)
+        self.cost_whilesale_field.setButtonSymbols(QAbstractSpinBox.NoButtons)
+        self.cost_whilesale_field.setMinimum(1)
+        self.cost_whilesale_field.setMaximum(999999)
 
         self.cost_retail_label = QLabel("Цена розничная", self)
         self.cost_retail_field = QDoubleSpinBox(self)
-        self.code_field.setButtonSymbols(QAbstractSpinBox.NoButtons)
-        self.code_field.setMinimum(1)
-        self.code_field.setMaximum(999999)
+        self.cost_retail_field.setButtonSymbols(QAbstractSpinBox.NoButtons)
+        self.cost_retail_field.setMinimum(1)
+        self.cost_retail_field.setMaximum(999999)
 
         self.push_button = QPushButton("Продолжить", self)
+        self.push_button.setDisabled(True)
         self.push_button.move(140, 220)
 
         # Moving.
@@ -82,4 +83,11 @@ class AddProduct(QDialog):
             if symbol.isnumeric():
                 QMessageBox.warning(self, "Ошибка!", "Вы вводите число.")
                 self.name_field.setText("")
+                self.push_button.setDisabled(True)
+                return
 
+        if self.name_field.text() not in (None, ''):
+            self.push_button.setDisabled(False)
+        else:
+            self.push_button.setDisabled(True)
+    
