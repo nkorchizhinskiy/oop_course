@@ -38,6 +38,7 @@ class AddDepartment(QDialog):
         self.time_end_field = QTimeEdit(self)
 
         self.push_button = QPushButton("Продолжить", self)
+        self.push_button.setDisabled(True)
         self.push_button.move(140, 220)
 
         # Moving.
@@ -76,11 +77,19 @@ class AddDepartment(QDialog):
                     if symbol.isnumeric():
                         QMessageBox.warning(self, "Ошибка!", "Вы вводите число.")
                         self.name_field.setText("")
+                        self.push_button.setDisabled(True)
+                        return
             case "name_chief":
                 for symbol in self.name_chief_field.text():
                     if symbol.isnumeric():
                         QMessageBox.warning(self, "Ошибка!", "Вы вводите число.")
                         self.name_chief_field.setText("")
+                        self.push_button.setDisabled(True)
+                        return
+        if self.name_field.text() not in(None, '') and self.name_chief_field.text() not in (None, ''):
+            self.push_button.setDisabled(False)
+        else:
+            self.push_button.setDisabled(True)
 
 
 
