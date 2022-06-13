@@ -1,7 +1,5 @@
 from json import load, dumps
 
-from PyQt5.QtCore import QMessageAuthenticationCode
-from PyQt5.QtWidgets import QMessageBox
 
 
 def output_database(table_value: str) -> dict:
@@ -81,7 +79,7 @@ def database_add_product_in_department(values: list) -> None:
             break
 
     for index, product_name in products.items():
-        if product_name[0] == values[1]:
+        if product_name[0] == values[1] and product_name[1] == values[4]:
             product_index = index
             break
 
@@ -93,7 +91,8 @@ def database_add_product_in_department(values: list) -> None:
     for key, value in json_text.items():
         if department[value[0]][0] == values[0] and \
                 products[value[1]][0] == values[1] and \
-                value[3] == values[3]:
+                value[3] == values[3] and \
+                products[value[1]][1] == values[4]:
             json_text[key] = [
                     department_index,
                     product_index,
@@ -124,7 +123,8 @@ def database_get_products() -> list[str]:
         product_list.append([product[0], 
                              product[1],
                              product[2],
-                             product[3],])
+                             product[3],
+                             ])
     return product_list
 
 
@@ -141,4 +141,80 @@ def database_get_departments_and_products() -> tuple[list[str], list[str]]:
     return (department_list, product_list)
 
     
+def database_get_department() -> list[str]:
+    """Get list with departments"""
+    departments = output_database("department")
+    department_list = []
+
+    for department in departments.values():
+        department_list.append(department[0])
+
+    return department_list
     
+
+def database_get_product_from_department(department: str) -> list[list[str]]:
+    """Get products from department"""
+    departments = output_database("department")
+    products = output_database("products")
+    products_in_department = output_database("product_in_department")
+    product_list = []
+    product_article = []
+    product_receip_date = []
+
+    for key, value in products_in_department.items():
+        if departments[value[0]][0] == department:
+            product_list.append(products[value[1]][0])
+            product_article.append(products[value[1]][1])
+            product_receip_date.append(value[3])
+            
+            
+
+    return [product_list, product_article, product_receip_date]
+    
+def database_delete_product_in_department(values: list) -> None:
+    """Delete product from department"""
+    products = output_database("products")
+    departments = output_database("department")
+    department_key = None
+    product_key = None
+    
+    for key, value in departments.items():
+        if values[0] == value[0]:
+            department_key = key
+
+    for key, value in products.items():
+        if values[1] == value[0] and values[2] == value[1]:
+            product_key = key
+
+    json_text = output_database("product_in_department")
+    for key, value in json_text.items():
+        if value[0] == department_key and \
+                value[1] == product_key and \
+                values[2] == products[product_key][1]:
+            value_for_delete = key
+    del json_text[value_for_delete]
+
+    with open("database/product_in_department.json", "w", encoding="utf-8") as file_write:
+        in_json = dumps(json_text, indent=4, ensure_ascii=False)
+        file_write.write(in_json)
+
+def delete_products_in_department_after_delete_product(values: list[str]) -> None:
+    """Delete products in department, when delete products"""
+    products = output_database("products")
+    json_text = output_database("product_in_department")
+    list_for_delete = []
+
+    for key, value in json_text.items():
+        print(products[value[1]])
+        if values[0] == products[value[1]][0] and \
+                values[1] == products[value[1]][1]:
+            list_for_delete.append(key)
+
+    for key in list_for_delete:
+        del json_text[key]
+    
+    with open("database/product_in_department.json", "w", encoding="utf-8") as file_write:
+        in_json = dumps(json_text, indent=4, ensure_ascii=False)
+        file_write.write(in_json)
+    
+

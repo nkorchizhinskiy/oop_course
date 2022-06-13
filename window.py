@@ -109,14 +109,55 @@ class MainWindow(QMainWindow):
             return "Файл пустой"
        
         self.table.setRowCount(len(db_out))
+        self.table.verticalHeader().hide()
         row = 0
-        for key, value in db_out.items():
-            self.table.setItem(row, 0, QTableWidgetItem(key))
-            self.table.setItem(row, 1, QTableWidgetItem(value[0]))
-            self.table.setItem(row, 2, QTableWidgetItem(value[1]))
-            self.table.setItem(row, 3, QTableWidgetItem(value[2]))
-            self.table.setItem(row, 4, QTableWidgetItem(value[3]))
-            row += 1
+        if db_id != "product_in_department":
+            for key, value in db_out.items():
+
+                self.table.setItem(row, 0, QTableWidgetItem(key))
+                self.table.setItem(row, 1, QTableWidgetItem(value[0]))
+                self.table.setItem(row, 2, QTableWidgetItem(value[1]))
+                self.table.setItem(row, 3, QTableWidgetItem(value[2]))
+                self.table.setItem(row, 4, QTableWidgetItem(value[3]))
+                row += 1
+
+
+        match db_id:
+            case "department":
+                self.table.setHorizontalHeaderLabels([
+                                                      "Индекс",
+                                                      "Название",
+                                                      "Заведующий",
+                                                      "Время открытия", 
+                                                      "Время закрытия",
+                                                        ])
+            case "products":
+                self.table.setHorizontalHeaderLabels([
+                                                      "Индекс",
+                                                      "Название",
+                                                      "Артикул", 
+                                                      "Цена оптовая", 
+                                                      "Цена розничная",
+                                                        ])
+            case "product_in_department":
+                self.table.setHorizontalHeaderLabels([
+                                                      "Индекс",
+                                                      "Индекс отдела",
+                                                      "Индекс товара", 
+                                                      "Количество", 
+                                                      "Дата поступления",
+                                                        ])
+                for key, value in db_out.items():
+                    department = database_actions.output_database("department")
+                    product = database_actions.output_database("products")
+
+                    self.table.setItem(row, 0, QTableWidgetItem(key))
+                    self.table.setItem(row, 1, QTableWidgetItem(f"{department[value[0]][0]} - ({value[0]})"))
+                    self.table.setItem(row, 2, QTableWidgetItem(f"{product[value[1]][0]} - ({value[1]})"))
+                    self.table.setItem(row, 3, QTableWidgetItem(value[2]))
+                    self.table.setItem(row, 4, QTableWidgetItem(value[3]))
+                    row += 1
+
         
     
     def on_clicked_add_department(self) -> None:
@@ -133,8 +174,12 @@ class MainWindow(QMainWindow):
 
     def on_clicked_delete_product(self) -> None:
         """Function which delete product on signal from menubar"""
-        self.delete_product_dialog = delete_product.DeleteProduct(self.menu_bar)
-        self.delete_product_dialog.push_button.clicked.connect(lambda: self.get_values("delete product"))
+        try:
+            self.delete_product_dialog = delete_product.DeleteProduct(self.menu_bar)
+            self.delete_product_dialog.push_button.clicked.connect(lambda: self.get_values("delete product"))
+        except TypeError:
+            QMessageBox.warning(self, "Ошибка!", "У вас нет товаров.")
+            self.menu_bar.setDisabled(False)
 
 
     def on_clicked_add_product_in_department(self) -> None:
@@ -176,6 +221,11 @@ class MainWindow(QMainWindow):
                 if result == 1:
                     QMessageBox.warning(self, "Ошибка!", "Такой товар уже есть.")
             case "delete product":
+                database_actions.delete_products_in_department_after_delete_product(
+                        [
+                            self.delete_product_dialog.name_combobox.currentText(),
+                            self.delete_product_dialog.name_combobox.currentData()[0]
+                            ])
                 values = [
                             self.delete_product_dialog.name_combobox.currentText(),
                             self.delete_product_dialog.name_combobox.currentData()[0],
@@ -190,8 +240,16 @@ class MainWindow(QMainWindow):
                             self.add_product_in_department_dialog.product_name_field.currentText(),
                             self.add_product_in_department_dialog.count_field.text(),
                             self.add_product_in_department_dialog.receipt_date_field.text(),
+                            self.add_product_in_department_dialog.product_name_field.currentData()[0]
                         ]
                 database_actions.database_add_product_in_department(values)
                 self.add_product_in_department_dialog.close()
             case "delete product in department":
-                pass
+                values = [
+                            self.delete_product_in_department_dialog.department_name_field.currentText(),
+                            self.delete_product_in_department_dialog.product_name_field.currentText(),
+                            self.delete_product_in_department_dialog.product_name_field.currentData()[0]
+
+                        ]
+                database_actions.database_delete_product_in_department(values)
+                self.delete_product_in_department_dialog.close()
